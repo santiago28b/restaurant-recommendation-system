@@ -36,7 +36,17 @@ create table public.user_preferences (
   dietary text[] not null default '{}',
   minimum_rating numeric check (minimum_rating between 0 and 5),
   open_now boolean not null default false,
-  weights jsonb not null default '{"rating": 0.4, "distance": 0.3, "match": 0.3}',
+  weights jsonb not null default '{"rating": 0.4, "distance": 0.3, "match": 0.3}'
+    check (
+      jsonb_typeof(weights) = 'object'
+      and weights ?& array['rating', 'distance', 'match']
+      and jsonb_typeof(weights -> 'rating') = 'number'
+      and jsonb_typeof(weights -> 'distance') = 'number'
+      and jsonb_typeof(weights -> 'match') = 'number'
+      and (weights ->> 'rating')::numeric >= 0
+      and (weights ->> 'distance')::numeric >= 0
+      and (weights ->> 'match')::numeric >= 0
+    ),
   updated_at timestamptz not null default now()
 );
 
