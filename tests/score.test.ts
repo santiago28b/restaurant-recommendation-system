@@ -132,3 +132,10 @@ test("rankPlaces does not mutate its input", () => {
   rankPlaces(input, prefs());
   assert.deepEqual(input, snapshot);
 });
+
+test("unknown rating or price is flagged when the user filters on it", () => {
+  const p = prefs({ minRating: 4, priceLevels: [1, 2] });
+  assert.deepEqual(scorePlace(place({ rating: null, priceLevel: null }), p).caveats, ["price_unknown", "rating_unknown"]);
+  assert.deepEqual(scorePlace(place({ rating: null, priceLevel: null }), prefs()).caveats, []);
+  assert.deepEqual(scorePlace(place(), p).caveats, []);
+});

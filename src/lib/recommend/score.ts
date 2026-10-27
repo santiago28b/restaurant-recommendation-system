@@ -11,7 +11,11 @@ import type { NormalizedPlace, Preferences } from "../places/types";
  * results but is tagged in `caveats` and only earns partial match credit.
  */
 
-export type Caveat = `dietary_unverified:${string}` | "open_status_unknown";
+export type Caveat =
+  | `dietary_unverified:${string}`
+  | "open_status_unknown"
+  | "rating_unknown"
+  | "price_unknown";
 
 export interface ScoreBreakdown {
   rating: number;
@@ -98,8 +102,10 @@ export function scorePlace(
   }
 
   if (prefs.priceLevels.length > 0) {
-    if (place.priceLevel === null) parts.push(UNKNOWN_CREDIT);
-    else parts.push(prefs.priceLevels.includes(place.priceLevel) ? 1 : 0);
+    if (place.priceLevel === null) {
+      parts.push(UNKNOWN_CREDIT);
+      caveats.push("price_unknown");
+    } else parts.push(prefs.priceLevels.includes(place.priceLevel) ? 1 : 0);
   }
 
   if (prefs.dietary.length > 0) {
@@ -113,6 +119,7 @@ export function scorePlace(
   }
 
   if (prefs.openNow && place.openNow === null) caveats.push("open_status_unknown");
+  if (typeof prefs.minRating === "number" && place.rating === null) caveats.push("rating_unknown");
 
   const match = parts.length ? parts.reduce((a, b) => a + b, 0) / parts.length : NEUTRAL;
   const score = weights.rating * rating + weights.distance * distance + weights.match * match;
